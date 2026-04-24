@@ -1,0 +1,25 @@
+{
+  "name": "ai-parking-management-platform",
+  "version": "1.0.0",
+  "description": "AI-Powered Parking Management Platform with Occupancy Prediction, Dynamic Pricing, License Plate Recognition, Violation Management, Revenue Optimization, and Mobile Payments",
+  "scripts": {
+    "server": "nodemon server/index.js",
+    "client": "cd client && react-scripts start",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "seed": "node server/seeds/seed.js",
+    "setup-db": "node server/seeds/setup-db.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.0",
+    "axios": "^1.7.7"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1",
+    "nodemon": "^3.1.7"
+  }
+}
