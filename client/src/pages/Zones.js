@@ -1,11 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { zonesAPI, facilitiesAPI, aiAPI } from '../services/api';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
 import AIResponse from '../components/AIResponse';
+import Pagination from '../components/Pagination';
 
 function Zones() {
   const [items, setItems] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [facilities, setFacilities] = useState([]);
   const [selected, setSelected] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -13,17 +17,42 @@ function Zones() {
   const [toast, setToast] = useState(null);
   const [aiResult, setAiResult] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [wsOccupancy, setWsOccupancy] = useState(null);
+  const [wsStatus, setWsStatus] = useState('disconnected');
+  const wsRef = useRef(null);
   const [form, setForm] = useState({ facility_id: '', zone_name: '', zone_code: '', zone_type: 'regular', total_spots: 0, occupied_spots: 0, hourly_rate: 0, is_covered: false, floor_level: '', status: 'active', max_height_ft: 0, notes: '' });
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (p = 1) => {
     try {
-      const [zones, fac] = await Promise.all([zonesAPI.getAll(), facilitiesAPI.getAll()]);
-      setItems(zones.data);
-      setFacilities(fac.data);
+      const [zones, fac] = await Promise.all([zonesAPI.getAll({ page: p, limit: 20 }), facilitiesAPI.getAll({ page: 1, limit: 100 })]);
+      const zd = zones.data;
+      setItems(zd.data || zd);
+      if (zd.totalPages) { setTotalPages(zd.totalPages); setTotal(zd.total); setPage(zd.page); }
+      const fd = fac.data;
+      setFacilities(fd.data || fd);
     } catch (err) { console.error(err); }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(1); }, [load]);
+
+  // WebSocket connection for real-time occupancy
+  useEffect(() => {
+    const wsUrl = `ws://localhost:3001`;
+    try {
+      const ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
+      ws.onopen = () => setWsStatus('connected');
+      ws.onmessage = (evt) => {
+        try {
+          const msg = JSON.parse(evt.data);
+          if (msg.type === 'occupancy_update') setWsOccupancy(msg.data);
+        } catch {}
+      };
+      ws.onerror = () => setWsStatus('error');
+      ws.onclose = () => setWsStatus('disconnected');
+    } catch {}
+    return () => { if (wsRef.current) wsRef.current.close(); };
+  }, []);
 
   const handleRowClick = (item) => setSelected(selected?.id === item.id ? null : item);
 
@@ -39,7 +68,7 @@ function Zones() {
 
   const handleDelete = async () => {
     if (!window.confirm('Delete this zone?')) return;
-    try { await zonesAPI.delete(selected.id); setToast({ msg: 'Zone deleted', type: 'success' }); setSelected(null); load(); }
+    try { await zonesAPI.delete(selected.id); setToast({ msg: 'Zone deleted', type: 'success' }); setSelected(null); load(page); }
     catch (err) { setToast({ msg: 'Delete failed', type: 'error' }); }
   };
 
@@ -48,7 +77,7 @@ function Zones() {
     try {
       if (editing) { await zonesAPI.update(selected.id, form); setToast({ msg: 'Zone updated', type: 'success' }); }
       else { await zonesAPI.create(form); setToast({ msg: 'Zone created', type: 'success' }); }
-      setShowModal(false); setSelected(null); load();
+      setShowModal(false); setSelected(null); load(page);
     } catch (err) { setToast({ msg: 'Save failed', type: 'error' }); }
   };
 
@@ -76,22 +105,63 @@ function Zones() {
 
   const getFacilityName = (id) => facilities.find(f => f.id === id)?.name || '-';
 
+  const getWsOccupancyForFacility = (facilityId) => {
+    return wsOccupancy?.find(f => f.id === facilityId);
+  };
+
   return (
     <div>
       {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
       <div className="page-header">
-        <div><h1>🅿️ Parking Zones</h1><p>Manage and optimize parking zones across facilities</p></div>
+        <div>
+          <h1>Parking Zones</h1>
+          <p>Manage and optimize parking zones across facilities</p>
+        </div>
         <div className="header-actions">
-          <button className="btn btn-ai" onClick={() => runAI(selected?.facility_id)}>🤖 AI Optimize</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px' }}>
+            <span style={{
+              width: '8px', height: '8px', borderRadius: '50%',
+              background: wsStatus === 'connected' ? '#22c55e' : wsStatus === 'error' ? '#ef4444' : '#888',
+              display: 'inline-block'
+            }} />
+            <span style={{ color: '#888' }}>
+              {wsStatus === 'connected' ? 'Live' : wsStatus === 'error' ? 'WS Error' : 'Offline'}
+            </span>
+          </div>
+          <button className="btn btn-ai" onClick={() => runAI(selected?.facility_id)}>AI Optimize</button>
           <button className="btn btn-primary" onClick={handleNew}>+ New Zone</button>
         </div>
       </div>
+
+      {/* Real-time occupancy from WebSocket */}
+      {wsOccupancy && (
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
+          {wsOccupancy.map(f => {
+            const occ = f.zone_total > 0 ? Math.round((f.occupied_spots / f.zone_total) * 100) : 0;
+            return (
+              <div key={f.id} style={{ background: 'var(--bg-card, #1a1a2e)', border: '1px solid var(--border, #333)', borderRadius: '8px', padding: '10px 16px', minWidth: '160px' }}>
+                <div style={{ fontSize: '11px', color: '#888', marginBottom: '4px' }}>{f.name}</div>
+                <div style={{ fontSize: '20px', fontWeight: 700, color: occ >= 85 ? '#ef4444' : occ >= 60 ? '#f59e0b' : '#22c55e' }}>{occ}%</div>
+                <div style={{ fontSize: '11px', color: '#888' }}>{f.occupied_spots}/{f.zone_total} spots</div>
+                <div style={{ marginTop: '4px', background: '#333', borderRadius: '2px', height: '4px' }}>
+                  <div style={{ width: `${occ}%`, height: '100%', borderRadius: '2px', background: occ >= 85 ? '#ef4444' : occ >= 60 ? '#f59e0b' : '#22c55e' }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <AIResponse data={aiResult} loading={aiLoading} />
 
       {selected && (
         <div className="detail-panel" style={{ marginTop: 20 }}>
           <h2>Zone: {selected.zone_name}</h2>
+          {selected.ai_analysis && (
+            <div style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '6px', padding: '10px 14px', marginBottom: '12px', fontSize: '13px', color: '#a5b4fc' }}>
+              <strong>AI Analysis:</strong> {selected.ai_analysis.substring(0, 200)}...
+            </div>
+          )}
           <div className="detail-grid">
             <div className="detail-item"><label>Zone Name</label><div className="value">{selected.zone_name}</div></div>
             <div className="detail-item"><label>Zone Code</label><div className="value">{selected.zone_code}</div></div>
@@ -104,15 +174,13 @@ function Zones() {
             </div>
             <div className="detail-item"><label>Rate/hr</label><div className="value">${selected.hourly_rate}</div></div>
             <div className="detail-item"><label>Floor</label><div className="value">{selected.floor_level || '-'}</div></div>
-            <div className="detail-item"><label>Covered</label><div className="value">{selected.is_covered ? '✅' : '❌'}</div></div>
-            <div className="detail-item"><label>Max Height (ft)</label><div className="value">{selected.max_height_ft || '-'}</div></div>
+            <div className="detail-item"><label>Covered</label><div className="value">{selected.is_covered ? 'Yes' : 'No'}</div></div>
             <div className="detail-item"><label>Status</label><div className="value"><span className={`badge ${getStatusBadge(selected.status)}`}>{selected.status}</span></div></div>
-            <div className="detail-item"><label>Notes</label><div className="value">{selected.notes || '-'}</div></div>
           </div>
           <div className="detail-actions">
             <button className="btn btn-primary btn-sm" onClick={handleEdit}>Edit</button>
             <button className="btn btn-danger btn-sm" onClick={handleDelete}>Delete</button>
-            <button className="btn btn-ai btn-sm" onClick={() => runAI(selected.facility_id)}>🤖 AI Optimize</button>
+            <button className="btn btn-ai btn-sm" onClick={() => runAI(selected.facility_id)}>AI Optimize</button>
             <button className="btn btn-secondary btn-sm" onClick={() => setSelected(null)}>Close</button>
           </div>
         </div>
@@ -120,10 +188,15 @@ function Zones() {
 
       <div className="data-table-container" style={{ marginTop: 20 }}>
         <table className="data-table">
-          <thead><tr><th>Zone</th><th>Code</th><th>Facility</th><th>Type</th><th>Spots</th><th>Rate/hr</th><th>Floor</th><th>Covered</th><th>Status</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Zone</th><th>Code</th><th>Facility</th><th>Type</th><th>Occupancy</th><th>Rate/hr</th><th>Floor</th><th>Covered</th><th>Status</th><th>AI</th>
+            </tr>
+          </thead>
           <tbody>
             {items.map((item) => {
               const rate = getOccupancyRate(item);
+              const wsData = getWsOccupancyForFacility(item.facility_id);
               return (
                 <tr key={item.id} onClick={() => handleRowClick(item)} style={{ background: selected?.id === item.id ? 'rgba(59,130,246,0.1)' : '' }}>
                   <td style={{ fontWeight: 600 }}>{item.zone_name}</td>
@@ -132,18 +205,27 @@ function Zones() {
                   <td>{item.zone_type}</td>
                   <td>
                     <span style={{ fontWeight: 600 }}>{item.occupied_spots}/{item.total_spots}</span>
-                    <div className="occupancy-bar" style={{ marginTop: 4 }}><div className={`fill ${getOccupancyClass(rate)}`} style={{ width: `${rate}%` }}></div></div>
+                    {' '}
+                    <span style={{ fontSize: '11px', color: rate >= 85 ? '#ef4444' : rate >= 60 ? '#f59e0b' : '#22c55e' }}>({rate}%)</span>
+                    {wsData && <span style={{ marginLeft: '4px', fontSize: '10px', color: '#6366f1' }}>LIVE</span>}
                   </td>
                   <td>${item.hourly_rate}</td>
                   <td>{item.floor_level || '-'}</td>
-                  <td>{item.is_covered ? '✅' : '❌'}</td>
+                  <td>{item.is_covered ? 'Yes' : 'No'}</td>
                   <td><span className={`badge ${getStatusBadge(item.status)}`}>{item.status}</span></td>
+                  <td>
+                    {item.ai_analysis ? (
+                      <span style={{ fontSize: '10px', background: 'rgba(99,102,241,0.2)', color: '#a5b4fc', padding: '2px 6px', borderRadius: '4px' }}>AI</span>
+                    ) : '-'}
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
+
+      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={(p) => load(p)} />
 
       {showModal && (
         <Modal title={editing ? 'Edit Zone' : 'New Zone'} onClose={() => setShowModal(false)}>

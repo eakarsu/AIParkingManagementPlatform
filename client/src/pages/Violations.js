@@ -3,9 +3,13 @@ import { violationsAPI, facilitiesAPI, aiAPI } from '../services/api';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
 import AIResponse from '../components/AIResponse';
+import Pagination from '../components/Pagination';
 
 function Violations() {
   const [items, setItems] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [facilities, setFacilities] = useState([]);
   const [selected, setSelected] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -15,15 +19,16 @@ function Violations() {
   const [aiLoading, setAiLoading] = useState(false);
   const [form, setForm] = useState({ facility_id: '', plate_number: '', violation_type: 'expired_meter', fine_amount: 75, description: '', status: 'pending', zone: 'A1', evidence_url: '' });
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (p = 1) => {
     try {
-      const [vio, fac] = await Promise.all([violationsAPI.getAll(), facilitiesAPI.getAll()]);
-      setItems(vio.data);
-      setFacilities(fac.data);
+      const [vio, fac] = await Promise.all([violationsAPI.getAll({ page: p, limit: 20 }), facilitiesAPI.getAll({ page: 1, limit: 100 })]);
+      const vd = vio.data; setItems(vd.data || vd);
+      if (vd.totalPages) { setTotalPages(vd.totalPages); setTotal(vd.total); setPage(vd.page); }
+      const fd = fac.data; setFacilities(fd.data || fd);
     } catch (err) { console.error(err); }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(1); }, [load]);
 
   const handleRowClick = (item) => setSelected(selected?.id === item.id ? null : item);
 
@@ -39,7 +44,7 @@ function Violations() {
 
   const handleDelete = async () => {
     if (!window.confirm('Delete this violation?')) return;
-    try { await violationsAPI.delete(selected.id); setToast({ msg: 'Violation deleted', type: 'success' }); setSelected(null); load(); }
+    try { await violationsAPI.delete(selected.id); setToast({ msg: 'Violation deleted', type: 'success' }); setSelected(null); load(page); }
     catch (err) { setToast({ msg: 'Delete failed', type: 'error' }); }
   };
 
@@ -48,7 +53,7 @@ function Violations() {
     try {
       if (editing) { await violationsAPI.update(selected.id, form); setToast({ msg: 'Violation updated', type: 'success' }); }
       else { await violationsAPI.create(form); setToast({ msg: 'Violation created', type: 'success' }); }
-      setShowModal(false); setSelected(null); load();
+      setShowModal(false); setSelected(null); load(page);
     } catch (err) { setToast({ msg: 'Save failed', type: 'error' }); }
   };
 
@@ -118,6 +123,8 @@ function Violations() {
           </tbody>
         </table>
       </div>
+
+      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={(p) => load(p)} />
 
       {showModal && (
         <Modal title={editing ? 'Edit Violation' : 'New Violation'} onClose={() => setShowModal(false)}>

@@ -2,25 +2,31 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { facilitiesAPI } from '../services/api';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
+import Pagination from '../components/Pagination';
 
 const emptyForm = { name: '', address: '', total_spaces: 500, hourly_rate: 5.0, facility_type: 'garage', status: 'active' };
 
 function Facilities() {
   const [items, setItems] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [selected, setSelected] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState(false);
   const [toast, setToast] = useState(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (p = 1) => {
     try {
-      const res = await facilitiesAPI.getAll();
-      setItems(res.data);
+      const res = await facilitiesAPI.getAll({ page: p, limit: 20 });
+      const d = res.data;
+      setItems(d.data || d);
+      if (d.totalPages) { setTotalPages(d.totalPages); setTotal(d.total); setPage(d.page); }
     } catch (err) { console.error(err); }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(1); }, [load]);
 
   const handleRowClick = (item) => setSelected(selected?.id === item.id ? null : item);
 
@@ -38,7 +44,7 @@ function Facilities() {
       await facilitiesAPI.delete(selected.id);
       setToast({ msg: 'Facility deleted', type: 'success' });
       setSelected(null);
-      load();
+      load(page);
     } catch (err) { setToast({ msg: 'Delete failed', type: 'error' }); }
   };
 
@@ -54,7 +60,7 @@ function Facilities() {
       }
       setShowModal(false);
       setSelected(null);
-      load();
+      load(page);
     } catch (err) { setToast({ msg: 'Save failed', type: 'error' }); }
   };
 
@@ -116,6 +122,8 @@ function Facilities() {
           </tbody>
         </table>
       </div>
+
+      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={(p) => load(p)} />
 
       {showModal && (
         <Modal title={editing ? 'Edit Facility' : 'New Facility'} onClose={() => setShowModal(false)}>

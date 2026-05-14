@@ -5,10 +5,14 @@ const auth = require('../middleware/auth');
 
 router.get('/', auth, async (req, res) => {
   try {
-    const result = await db.query(
-      'SELECT r.*, f.name AS facility_name FROM reservations r LEFT JOIN facilities f ON r.facility_id = f.id ORDER BY r.start_time DESC'
-    );
-    res.json(result.rows);
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, parseInt(req.query.limit) || 20);
+    const offset = (page - 1) * limit;
+    const [result, count] = await Promise.all([
+      db.query(`SELECT r.*, f.name AS facility_name FROM reservations r LEFT JOIN facilities f ON r.facility_id = f.id ORDER BY r.start_time DESC LIMIT $1 OFFSET $2`, [limit, offset]),
+      db.query('SELECT COUNT(*) FROM reservations'),
+    ]);
+    res.json({ data: result.rows, page, limit, total: parseInt(count.rows[0].count), totalPages: Math.ceil(parseInt(count.rows[0].count) / limit) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

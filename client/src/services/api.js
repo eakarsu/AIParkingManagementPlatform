@@ -32,7 +32,7 @@ export const authAPI = {
 };
 
 export const facilitiesAPI = {
-  getAll: () => api.get('/facilities'),
+  getAll: (params) => api.get('/facilities', { params }),
   getOne: (id) => api.get(`/facilities/${id}`),
   create: (data) => api.post('/facilities', data),
   update: (id, data) => api.put(`/facilities/${id}`, data),
@@ -40,7 +40,7 @@ export const facilitiesAPI = {
 };
 
 export const occupancyAPI = {
-  getAll: () => api.get('/occupancy'),
+  getAll: (params) => api.get('/occupancy', { params }),
   getOne: (id) => api.get(`/occupancy/${id}`),
   create: (data) => api.post('/occupancy', data),
   update: (id, data) => api.put(`/occupancy/${id}`, data),
@@ -56,7 +56,7 @@ export const pricingAPI = {
 };
 
 export const platesAPI = {
-  getAll: () => api.get('/plates'),
+  getAll: (params) => api.get('/plates', { params }),
   getOne: (id) => api.get(`/plates/${id}`),
   create: (data) => api.post('/plates', data),
   update: (id, data) => api.put(`/plates/${id}`, data),
@@ -64,7 +64,7 @@ export const platesAPI = {
 };
 
 export const violationsAPI = {
-  getAll: () => api.get('/violations'),
+  getAll: (params) => api.get('/violations', { params }),
   getOne: (id) => api.get(`/violations/${id}`),
   create: (data) => api.post('/violations', data),
   update: (id, data) => api.put(`/violations/${id}`, data),
@@ -72,7 +72,7 @@ export const violationsAPI = {
 };
 
 export const revenueAPI = {
-  getAll: () => api.get('/revenue'),
+  getAll: (params) => api.get('/revenue', { params }),
   getOne: (id) => api.get(`/revenue/${id}`),
   create: (data) => api.post('/revenue', data),
   update: (id, data) => api.put(`/revenue/${id}`, data),
@@ -80,7 +80,7 @@ export const revenueAPI = {
 };
 
 export const paymentsAPI = {
-  getAll: () => api.get('/payments'),
+  getAll: (params) => api.get('/payments', { params }),
   getOne: (id) => api.get(`/payments/${id}`),
   create: (data) => api.post('/payments', data),
   update: (id, data) => api.put(`/payments/${id}`, data),
@@ -104,7 +104,7 @@ export const evChargingAPI = {
 };
 
 export const reservationsAPI = {
-  getAll: () => api.get('/reservations'),
+  getAll: (params) => api.get('/reservations', { params }),
   getOne: (id) => api.get(`/reservations/${id}`),
   create: (data) => api.post('/reservations', data),
   update: (id, data) => api.put(`/reservations/${id}`, data),
@@ -112,7 +112,7 @@ export const reservationsAPI = {
 };
 
 export const permitsAPI = {
-  getAll: () => api.get('/permits'),
+  getAll: (params) => api.get('/permits', { params }),
   getOne: (id) => api.get(`/permits/${id}`),
   create: (data) => api.post('/permits', data),
   update: (id, data) => api.put(`/permits/${id}`, data),
@@ -152,7 +152,7 @@ export const feedbackAPI = {
 };
 
 export const zonesAPI = {
-  getAll: () => api.get('/zones'),
+  getAll: (params) => api.get('/zones', { params }),
   getOne: (id) => api.get(`/zones/${id}`),
   create: (data) => api.post('/zones', data),
   update: (id, data) => api.put(`/zones/${id}`, data),
@@ -198,6 +198,7 @@ export const exportAPI = {
 };
 
 export const aiAPI = {
+  getHistory: (params) => api.get('/ai/history', { params }),
   predictOccupancy: (data) => api.post('/ai/predict-occupancy', data),
   optimizePricing: (data) => api.post('/ai/optimize-pricing', data),
   analyzePlate: (data) => api.post('/ai/analyze-plate', data),
@@ -213,6 +214,9 @@ export const aiAPI = {
   predictMaintenance: (data) => api.post('/ai/predict-maintenance', data),
   analyzeFeedback: (data) => api.post('/ai/analyze-feedback', data),
   optimizeZones: (data) => api.post('/ai/optimize-zones', data),
+  assetLifecyclePredict: (data) => api.post('/ai/asset-lifecycle-predict', data),
+  facilityAuditRecommend: (data) => api.post('/ai/facility-audit-recommend', data),
+  intrusionDetect: (data) => api.post('/ai/intrusion-detect', data),
 };
 
 export default api;

@@ -24,6 +24,24 @@ const navItems = [
   { path: '/notifications', label: 'Notifications', icon: '🔔' },
   { path: '/profile', label: 'My Profile', icon: '👤' },
   { path: '/data-export', label: 'Data Export', icon: '📥' },
+  { path: '/ai-history', label: 'AI History', icon: '🤖' },
+  { path: '/ai-predictive', label: 'AI Predictive', icon: '🔮' },
+  // === Batch 06 Gaps & Frontend Mounts ===
+  { path: '/cf-autonomous-pricing-engine', label: 'Autonomous pricing engine', icon: '✨' },
+  { path: '/cf-computer-vision-enforcement', label: 'Computer vision enforcement', icon: '✨' },
+  { path: '/cf-ev-charging-optimization', label: 'EV charging optimization', icon: '✨' },
+  { path: '/cf-resident-permit-fraud-detection', label: 'Resident permit fraud detection', icon: '✨' },
+  { path: '/cf-traffic-aware-guidance', label: 'Traffic-aware guidance', icon: '✨' },
+  { path: '/gap-maintenance-without-asset', label: 'Maintenance without `/asset', icon: '✨' },
+  { path: '/gap-facilities-without-facility', label: 'Facilities without `/facility', icon: '✨' },
+  { path: '/gap-security-without-intrusion', label: 'Security without `/intrusion', icon: '✨' },
+  { path: '/gap-no-integrations-with-ride', label: 'No integrations with ride', icon: '✨' },
+  { path: '/gap-no-native-mobile-app-web-only', label: 'No native mobile app (web only', icon: '✨' },
+  { path: '/gap-limited-customer-self', label: 'Limited customer self', icon: '✨' },
+  { path: '/gap-no-integration-with-traffic-navigation-apps-waze-g', label: 'No integration with traffic/navigation apps (Waze, Google Maps for supply signaling)', icon: '✨' },
+  { path: '/gap-no-license-plate-database-integration-dmv-vehicle-', label: 'No license plate database integration (DMV / vehicle registration)', icon: '✨' },
+  { path: '/gap-no-webhooks-for-external-systems', label: 'No webhooks for external systems', icon: '✨' },
+  { path: '/gap-limited-multi', label: 'Limited multi', icon: '✨' }
 ];
 
 function Layout({ user, onLogout, children }) {

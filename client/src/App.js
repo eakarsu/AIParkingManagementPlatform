@@ -23,9 +23,28 @@ import ActivityLog from './pages/ActivityLog';
 import Notifications from './pages/Notifications';
 import Profile from './pages/Profile';
 import DataExport from './pages/DataExport';
+import AIHistory from './pages/AIHistory';
+import AIPredictive from './pages/AIPredictive';
+import Extensions from './pages/Extensions';
 import Layout from './components/Layout';
 import './styles/App.css';
 
+// // === Batch 06 Gaps & Frontend Mounts ===
+import CFAutonomousPricingEnginePage from './pages/CFAutonomousPricingEnginePage';
+import CFComputerVisionEnforcementPage from './pages/CFComputerVisionEnforcementPage';
+import CFEvChargingOptimizationPage from './pages/CFEvChargingOptimizationPage';
+import CFResidentPermitFraudDetectionPage from './pages/CFResidentPermitFraudDetectionPage';
+import CFTrafficAwareGuidancePage from './pages/CFTrafficAwareGuidancePage';
+import GapMaintenanceWithoutAssetPage from './pages/GapMaintenanceWithoutAssetPage';
+import GapFacilitiesWithoutFacilityPage from './pages/GapFacilitiesWithoutFacilityPage';
+import GapSecurityWithoutIntrusionPage from './pages/GapSecurityWithoutIntrusionPage';
+import GapNoIntegrationsWithRidePage from './pages/GapNoIntegrationsWithRidePage';
+import GapNoNativeMobileAppWebOnlyPage from './pages/GapNoNativeMobileAppWebOnlyPage';
+import GapLimitedCustomerSelfPage from './pages/GapLimitedCustomerSelfPage';
+import GapNoIntegrationWithTrafficNavigationAppsWazeGPage from './pages/GapNoIntegrationWithTrafficNavigationAppsWazeGPage';
+import GapNoLicensePlateDatabaseIntegrationDmvVehiclePage from './pages/GapNoLicensePlateDatabaseIntegrationDmvVehiclePage';
+import GapNoWebhooksForExternalSystemsPage from './pages/GapNoWebhooksForExternalSystemsPage';
+import GapLimitedMultiPage from './pages/GapLimitedMultiPage';
 function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
@@ -81,7 +100,27 @@ function App() {
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/data-export" element={<DataExport />} />
+          <Route path="/ai-history" element={<AIHistory />} />
+          <Route path="/ai-predictive" element={<AIPredictive />} />
+          <Route path="/extensions" element={<Extensions />} />
           <Route path="*" element={<Navigate to="/" />} />
+        
+          {/* // === Batch 06 Gaps & Frontend Mounts === */}
+          <Route path="/cf-autonomous-pricing-engine" element={<CFAutonomousPricingEnginePage />} />
+          <Route path="/cf-computer-vision-enforcement" element={<CFComputerVisionEnforcementPage />} />
+          <Route path="/cf-ev-charging-optimization" element={<CFEvChargingOptimizationPage />} />
+          <Route path="/cf-resident-permit-fraud-detection" element={<CFResidentPermitFraudDetectionPage />} />
+          <Route path="/cf-traffic-aware-guidance" element={<CFTrafficAwareGuidancePage />} />
+          <Route path="/gap-maintenance-without-asset" element={<GapMaintenanceWithoutAssetPage />} />
+          <Route path="/gap-facilities-without-facility" element={<GapFacilitiesWithoutFacilityPage />} />
+          <Route path="/gap-security-without-intrusion" element={<GapSecurityWithoutIntrusionPage />} />
+          <Route path="/gap-no-integrations-with-ride" element={<GapNoIntegrationsWithRidePage />} />
+          <Route path="/gap-no-native-mobile-app-web-only" element={<GapNoNativeMobileAppWebOnlyPage />} />
+          <Route path="/gap-limited-customer-self" element={<GapLimitedCustomerSelfPage />} />
+          <Route path="/gap-no-integration-with-traffic-navigation-apps-waze-g" element={<GapNoIntegrationWithTrafficNavigationAppsWazeGPage />} />
+          <Route path="/gap-no-license-plate-database-integration-dmv-vehicle-" element={<GapNoLicensePlateDatabaseIntegrationDmvVehiclePage />} />
+          <Route path="/gap-no-webhooks-for-external-systems" element={<GapNoWebhooksForExternalSystemsPage />} />
+          <Route path="/gap-limited-multi" element={<GapLimitedMultiPage />} />
         </Routes>
       </Layout>
     </Router>
