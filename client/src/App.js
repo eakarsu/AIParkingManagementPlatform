@@ -45,6 +45,9 @@ import GapNoIntegrationWithTrafficNavigationAppsWazeGPage from './pages/GapNoInt
 import GapNoLicensePlateDatabaseIntegrationDmvVehiclePage from './pages/GapNoLicensePlateDatabaseIntegrationDmvVehiclePage';
 import GapNoWebhooksForExternalSystemsPage from './pages/GapNoWebhooksForExternalSystemsPage';
 import GapLimitedMultiPage from './pages/GapLimitedMultiPage';
+import CodexCustomVizFeature from './pages/CodexCustomVizFeature';
+import CodexOperationsFeature from './pages/CodexOperationsFeature';
+
 function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
@@ -78,6 +81,9 @@ function App() {
     <Router>
       <Layout user={user} onLogout={handleLogout}>
         <Routes>
+        <Route path="/codex/custom-viz" element={<CodexCustomVizFeature />} />
+        <Route path="/codex/operations" element={<CodexOperationsFeature />} />
+
           <Route path="/" element={<Dashboard />} />
           <Route path="/facilities" element={<Facilities />} />
           <Route path="/occupancy" element={<Occupancy />} />
