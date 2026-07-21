@@ -8,6 +8,9 @@ const db = require('./models/db');
 
 const app = express();
 const PORT = process.env.SERVER_PORT || 3001;
+if ((process.env.JWT_SECRET || '').length < 32 || !process.env.GOVERNANCE_TENANT_ID) {
+  throw new Error('JWT_SECRET (32+ characters) and GOVERNANCE_TENANT_ID are required');
+}
 
 // Security middleware
 app.use(helmet());
@@ -42,9 +45,6 @@ app.use('/api/activity-log', require('./routes/activity-log'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/profile', require('./routes/profile'));
 app.use('/api/export', require('./routes/export'));
-// Apply pass 5 — backlog extensions (rideshare, broadcast, vehicle-reg, utility DR, self-service, mobile, permit-fraud)
-app.use('/api', require('./routes/extensions'));
-
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
@@ -100,27 +100,16 @@ try {
   console.log('ws package not available, skipping WebSocket server:', e.message);
 }
 
+app.use('/api/governed-parking-fulfillment', require('./governance'));
+if (process.env.ENABLE_GENERATED_ROUTES === 'true' && process.env.NODE_ENV !== 'production') {
+  app.use('/api', require('./routes/extensions'));
+  app.use('/api/cf-autonomous-pricing-engine', require('./routes/customFeat01_AutonomousPricingEngine'));
+  app.use('/api/cf-computer-vision-enforcement', require('./routes/customFeat02_ComputerVisionEnforcement'));
+  app.use('/api/cf-ev-charging-optimization', require('./routes/customFeat03_EvChargingOptimization'));
+  app.use('/api/cf-resident-permit-fraud-detection', require('./routes/customFeat04_ResidentPermitFraudDetection'));
+  app.use('/api/cf-traffic-aware-guidance', require('./routes/customFeat05_TrafficAwareGuidance'));
+}
+
 httpServer.listen(PORT, () => {
   console.log(`AI Parking Management Server running on port ${PORT}`);
 });
-
-
-// === Custom Feature Mounts (batch_06) ===
-app.use('/api/cf-autonomous-pricing-engine', require('./routes/customFeat01_AutonomousPricingEngine'));
-app.use('/api/cf-computer-vision-enforcement', require('./routes/customFeat02_ComputerVisionEnforcement'));
-app.use('/api/cf-ev-charging-optimization', require('./routes/customFeat03_EvChargingOptimization'));
-app.use('/api/cf-resident-permit-fraud-detection', require('./routes/customFeat04_ResidentPermitFraudDetection'));
-app.use('/api/cf-traffic-aware-guidance', require('./routes/customFeat05_TrafficAwareGuidance'));
-
-
-// === Batch 06 Gaps & Frontend Mounts ===
-app.use('/api/gap-maintenance-without-asset', require('./routes/gapFeat_maintenance_without_asset'));
-app.use('/api/gap-facilities-without-facility', require('./routes/gapFeat_facilities_without_facility'));
-app.use('/api/gap-security-without-intrusion', require('./routes/gapFeat_security_without_intrusion'));
-app.use('/api/gap-no-integrations-with-ride', require('./routes/gapFeat_no_integrations_with_ride'));
-app.use('/api/gap-no-native-mobile-app-web-only', require('./routes/gapFeat_no_native_mobile_app_web_only'));
-app.use('/api/gap-limited-customer-self', require('./routes/gapFeat_limited_customer_self'));
-app.use('/api/gap-no-integration-with-traffic-navigation-apps-waze-g', require('./routes/gapFeat_no_integration_with_traffic_navigation_apps_waze_g'));
-app.use('/api/gap-no-license-plate-database-integration-dmv-vehicle-', require('./routes/gapFeat_no_license_plate_database_integration_dmv_vehicle_'));
-app.use('/api/gap-no-webhooks-for-external-systems', require('./routes/gapFeat_no_webhooks_for_external_systems'));
-app.use('/api/gap-limited-multi', require('./routes/gapFeat_limited_multi'));
