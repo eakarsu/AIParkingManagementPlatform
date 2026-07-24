@@ -4,6 +4,12 @@ const { Pool } = require('pg');
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
+function requireDemoPassword() {
+  const password = process.env.DEMO_PASSWORD || process.env.SEED_DEMO_PASSWORD || process.env.DEMO_SEED_PASSWORD || '';
+  if (password.length < 12 || password.length > 1024) throw new Error('DEMO_PASSWORD must contain 12-1024 characters');
+  return password;
+}
+
 async function seed() {
   try {
     // Clear existing data
@@ -11,7 +17,7 @@ async function seed() {
     console.log('🗑️  Cleared existing data');
 
     // Seed Users
-    const passwordHash = await bcrypt.hash('admin123', 10);
+    const passwordHash = await bcrypt.hash(requireDemoPassword(), 10);
     await pool.query(
       `INSERT INTO users (name, email, password_hash, role) VALUES
        ('Admin User', 'admin@parking.com', $1, 'admin'),
@@ -19,7 +25,7 @@ async function seed() {
        ('Sarah Manager', 'sarah@parking.com', $1, 'manager')`,
       [passwordHash]
     );
-    console.log('✅ Seeded 3 users (password: admin123)');
+    console.log('Demo login users provisioned from the local environment.');
 
     // Seed 15 Facilities
     await pool.query(`
@@ -409,7 +415,7 @@ async function seed() {
     console.log('✅ Seeded 19 parking zones');
 
     console.log('\n🎉 All seed data inserted successfully!');
-    console.log('📧 Login: admin@parking.com / admin123');
+    console.log('Demo login users provisioned from the local environment.');
   } catch (err) {
     console.error('Seed error:', err);
   } finally {
