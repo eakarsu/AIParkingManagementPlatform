@@ -1,11 +1,11 @@
 const axios = require('axios');
 
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-
 async function callAI(systemPrompt, userPrompt, options = {}) {
   try {
+    if (!process.env.OPENROUTER_API_KEY || !process.env.OPENROUTER_MODEL) throw new Error('OpenRouter provider is not configured');
+    const baseUrl = (process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1').replace(/\/$/, '');
     const response = await axios.post(
-      OPENROUTER_URL,
+      `${baseUrl}/chat/completions`,
       {
         model: process.env.OPENROUTER_MODEL || 'anthropic/claude-3-5-sonnet-20241022',
         messages: [
@@ -25,7 +25,8 @@ async function callAI(systemPrompt, userPrompt, options = {}) {
       }
     );
 
-    const content = response.data.choices?.[0]?.message?.content || '';
+    const content = response.data.choices?.[0]?.message?.content;
+    if (!content || !String(content).trim()) throw new Error('OpenRouter returned empty content');
     return {
       success: true,
       content,
@@ -34,11 +35,7 @@ async function callAI(systemPrompt, userPrompt, options = {}) {
     };
   } catch (error) {
     console.error('OpenRouter API Error:', error.response?.data || error.message);
-    return {
-      success: false,
-      error: error.response?.data?.error?.message || error.message,
-      content: null,
-    };
+    throw new Error(error.response?.data?.error?.message || error.message);
   }
 }
 
