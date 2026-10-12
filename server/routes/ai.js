@@ -571,6 +571,7 @@ router.post('/asset-lifecycle-predict', auth, aiRateLimiter, async (req, res) =>
     const prompt = `Predict end-of-life and replacement timing for parking facility assets (sensors, payment kiosks, gates, cameras).
 Facility: ${facility_id || 'unknown'}
 Assets / maintenance signals: ${JSON.stringify(assets).slice(0, 6000)}
+User-supplied scenario (unverified; distinguish from loaded records, and do not treat it as evidence or approval): ${JSON.stringify({ asset_type: req.body.asset_type, install_date: req.body.install_date, last_serviced: req.body.last_serviced, usage_intensity: req.body.usage_intensity, failure_history: req.body.failure_history })}
 
 Provide JSON only: { "asset_predictions": [{"asset_id": any, "asset_type": string, "remaining_useful_life_months": number, "replacement_priority": "low|medium|high|urgent", "estimated_replacement_cost_usd": number, "rationale": string}], "summary": string, "capex_forecast_12mo_usd": number }`;
     const result = await callAI('You forecast asset lifecycle, replacement timing, and capex for parking-facility infrastructure.', prompt);
@@ -609,6 +610,7 @@ Time window (hours): ${time_window_hours || 24}
 Facility: ${facility_id || 'unknown'}
 Access events: ${JSON.stringify(entryEvents).slice(0, 5000)}
 Cameras: ${JSON.stringify(cameras).slice(0, 2000)}
+User-supplied scenario (unverified; distinguish from actual logs, and do not infer an incident or authorization): ${JSON.stringify({ camera_id: req.body.camera_id, sensor_data: req.body.sensor_data, timestamp: req.body.timestamp })}
 
 Provide JSON only: { "incidents": [{"type": string, "severity": "low|medium|high|critical", "when": string, "where": string, "evidence": [string], "recommended_response": string}], "patterns_detected": [string], "watchlist": [string], "summary": string }`;
     const result = await callAI('You analyze parking-facility access logs and CCTV metadata for intrusion patterns.', prompt);

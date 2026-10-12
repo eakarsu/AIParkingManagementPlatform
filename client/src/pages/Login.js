@@ -21,9 +21,17 @@ function Login({ onLogin }) {
     }
   };
 
-  const autoFill = () => {
-    setEmail(process.env.REACT_APP_DEMO_EMAIL || '');
-    setPassword(process.env.REACT_APP_DEMO_PASSWORD || '');
+  const handleDemoLogin = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const res = await authAPI.demoLogin();
+      onLogin(res.data.user, res.data.token);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Demo login is unavailable');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -63,8 +71,8 @@ function Login({ onLogin }) {
           </button>
         </form>
 
-        <button className="btn auto-fill-btn" onClick={autoFill}>
-          Auto Fill Demo Credentials
+        <button type="button" className="btn auto-fill-btn" disabled={loading} onClick={handleDemoLogin}>
+          Log In as Demo
         </button>
       </div>
     </div>
